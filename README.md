@@ -373,6 +373,17 @@ API 提取 `choices[0].message.content` 并封装为简化的响应格式。
 - **项目主页**: [https://nako.nightcord.de5.net](https://nako.nightcord.de5.net)
 - **哔哩哔哩**: [@bili_47177171806](https://space.bilibili.com/3546904856103196)
 
+## 🙏 致谢
+
+- 感谢所有贡献者
+- 感谢 Cloudflare 提供的 Workers AI 和 Vectorize 服务
+
+## ⭐ Star History
+
+如果这个项目对你有帮助，请给我们一个 Star！
+
+[![Star History Chart](https://api.star-history.com/svg?repos=25-ji-code-de/nako&type=Date)](https://star-history.com/#25-ji-code-de/nako&Date)
+
 ---
 
 <div align="center">
