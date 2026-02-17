@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 import type { Env, HistoryMessage, AIResponse } from "../types";
 import type { ModelProvider } from "../models/base";
 import { WorkersAIProvider } from "../models/workers-ai";

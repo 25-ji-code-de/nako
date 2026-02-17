@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 import type { ModelProvider, ModelConfig } from "./base";
 import type { HistoryMessage, AIResponse } from "../types";
 
@@ -5,12 +8,44 @@ import type { HistoryMessage, AIResponse } from "../types";
  * OpenAI 格式 API 提供商（支持任何兼容 OpenAI 格式的 API）
  */
 export class OpenAIProvider implements ModelProvider {
+  private readonly fullEndpoint: string;
+
   constructor(
-    private endpoint: string,
+    endpoint: string,
     private apiKey: string,
     private model: string = "gpt-3.5-turbo",
     private config: ModelConfig = {}
-  ) {}
+  ) {
+    // 智能补全endpoint路径，支持多种格式
+    this.fullEndpoint = this.normalizeEndpoint(endpoint);
+  }
+
+  /**
+   * 规范化endpoint，自动补全 /v1/chat/completions
+   * 支持的输入格式：
+   * - https://api.example.com → https://api.example.com/v1/chat/completions
+   * - https://api.example.com/ → https://api.example.com/v1/chat/completions
+   * - https://api.example.com/v1 → https://api.example.com/v1/chat/completions
+   * - https://api.example.com/v1/ → https://api.example.com/v1/chat/completions
+   * - https://api.example.com/v1/chat/completions → https://api.example.com/v1/chat/completions (不变)
+   */
+  private normalizeEndpoint(endpoint: string): string {
+    // 移除末尾的斜杠
+    let normalized = endpoint.replace(/\/+$/, '');
+
+    // 如果已经包含完整路径，直接返回
+    if (normalized.endsWith('/chat/completions')) {
+      return normalized;
+    }
+
+    // 如果以 /v1 结尾，补全 /chat/completions
+    if (normalized.endsWith('/v1')) {
+      return normalized + '/chat/completions';
+    }
+
+    // 否则补全 /v1/chat/completions
+    return normalized + '/v1/chat/completions';
+  }
 
   /**
    * 将历史消息转换为 role-based 消息数组
@@ -59,7 +94,7 @@ export class OpenAIProvider implements ModelProvider {
       stream,
     };
 
-    const response = await fetch(this.endpoint, {
+    const response = await fetch(this.fullEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

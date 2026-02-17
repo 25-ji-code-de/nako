@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 /**
  * Preprocess stickers.json to prepare data for vectorization
  * This script extracts meaningful text from stickers and creates embeddings

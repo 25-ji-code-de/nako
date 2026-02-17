@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 import type { Env } from "../types";
 import { createErrorResponse } from "../utils/response";
 import { searchStickersWithScores, extractRecentStickers } from "../services/sticker";

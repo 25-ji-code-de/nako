@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 // 认证中间件 - 验证 SEKAI Pass 的 access token
 
 import type { Env } from "../types";

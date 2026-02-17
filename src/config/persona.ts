@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 The 25-ji-code-de Team
+
 const RANDOM_VIBES = [
     // 身体感受
     "盯着屏幕太久，眼睛有点干。",

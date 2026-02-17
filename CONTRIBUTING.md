@@ -182,7 +182,7 @@ git rebase upstream/main
 
 ## 📄 许可证
 
-通过贡献代码，你同意你的贡献将在 MIT 许可证下发布。
+通过贡献代码，你同意你的贡献将在 Apache License 2.0 许可证下发布。
 
 ---
 
