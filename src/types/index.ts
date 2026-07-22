@@ -60,12 +60,10 @@ export interface Env {
   DB: D1Database; // pjsekai 统计
   ENVIRONMENT?: string;
 
-  // OpenAI 兼容（secret / .dev.vars）
   OPENAI_ENDPOINT?: string;
   OPENAI_API_KEY?: string;
-  /** 全局模型覆盖；低于 OPENAI_MODEL_<ID>，见 config/llm.ts */
   OPENAI_MODEL?: string;
-  // 人设专属：OPENAI_MODEL_<注册 id 大写>，运行时动态读，不在此枚举
+  // Also OPENAI_ENDPOINT_<ID> / OPENAI_API_KEY_<ID> / OPENAI_MODEL_<ID>
 
   WORKERS_AI_MODEL?: string;
 }

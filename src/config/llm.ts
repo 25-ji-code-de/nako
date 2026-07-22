@@ -5,7 +5,7 @@ import type { Env } from "../types";
 import type { PersonaConfig } from "../personas/base";
 
 export const DEFAULT_WORKERS_AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
-export const DEFAULT_OPENAI_MODEL = "deepseek-v4-flash";
+export const DEFAULT_OPENAI_MODEL = "deepseek-chat";
 
 /** WORKERS_AI_MODEL → persona.workersAi.model → 默认 */
 export function resolveWorkersAIModel(env: Env, persona: PersonaConfig): string {
@@ -16,17 +16,35 @@ export function resolveWorkersAIModel(env: Env, persona: PersonaConfig): string 
   );
 }
 
-export function resolveOpenAICredentials(env: Env): {
+/** nako → NAKO；my-bot → MY_BOT */
+export function personaIdToEnvSuffix(personaId: string | undefined): string {
+  return (personaId || "nako").toUpperCase().replace(/[^\w]/g, "_");
+}
+
+/** OPENAI_ENDPOINT_<ID> / OPENAI_API_KEY_<ID> → 全局 OPENAI_* */
+export function resolveOpenAICredentials(
+  env: Env,
+  personaId?: string
+): {
   endpoint: string;
   apiKey: string;
 } {
-  const endpoint = env.OPENAI_ENDPOINT?.trim();
-  const apiKey = env.OPENAI_API_KEY?.trim();
+  const suffix = personaIdToEnvSuffix(personaId);
+  const envMap = env as unknown as Record<string, string | undefined>;
+
+  const endpoint =
+    envMap[`OPENAI_ENDPOINT_${suffix}`]?.trim() ||
+    env.OPENAI_ENDPOINT?.trim() ||
+    "";
+  const apiKey =
+    envMap[`OPENAI_API_KEY_${suffix}`]?.trim() ||
+    env.OPENAI_API_KEY?.trim() ||
+    "";
 
   if (!endpoint || !apiKey) {
     throw new Error(
-      "OpenAI API configuration missing. Set secrets OPENAI_ENDPOINT and OPENAI_API_KEY " +
-        "(optional: OPENAI_MODEL or OPENAI_MODEL_<PERSONA_ID>). " +
+      "OpenAI API configuration missing. Set OPENAI_ENDPOINT + OPENAI_API_KEY " +
+        "(optional per-persona: OPENAI_ENDPOINT_<ID> / OPENAI_API_KEY_<ID> / OPENAI_MODEL_<ID>). " +
         "Example: wrangler secret put OPENAI_ENDPOINT"
     );
   }
@@ -34,15 +52,7 @@ export function resolveOpenAICredentials(env: Env): {
   return { endpoint, apiKey };
 }
 
-/** nako → NAKO；my-bot → MY_BOT */
-export function personaIdToEnvSuffix(personaId: string | undefined): string {
-  return (personaId || "nako").toUpperCase().replace(/[^\w]/g, "_");
-}
-
-/**
- * OPENAI_MODEL_<ID> → OPENAI_MODEL → persona.openai.model → 默认
- * 人设专属 secret 动态读取，新人设无需改 Env 类型。
- */
+/** OPENAI_MODEL_<ID> → OPENAI_MODEL → persona.openai.model → 默认 */
 export function resolveOpenAIModelForId(
   env: Env,
   personaId: string | undefined,

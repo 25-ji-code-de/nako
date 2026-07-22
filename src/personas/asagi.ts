@@ -7,11 +7,11 @@ export const asagiPersona: PersonaConfig = {
   name: "Asagi",
   provider: "openai",
   openai: {
-    model: "glm-5.2-instant",
+    model: "deepseek-v4-pro",
   },
   modelConfig: {
-    temperature: 0.85,       // ← 超现实角色需要更高随机性
-    maxTokens: 300,          // ← 大幅缩减
+    temperature: 0.85,
+    maxTokens: 300,
     topP: 0.92,
     frequencyPenalty: 0.2,
     presencePenalty: 0.1,

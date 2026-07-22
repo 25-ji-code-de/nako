@@ -95,17 +95,16 @@ function pick<T>(arr: T[]): T {
 
 export const nakoPersona: PersonaConfig = {
   name: "Nako",
-  provider: "workers-ai",
-  workersAi: {
-    model: "@cf/qwen/qwen3-30b-a3b-fp8",
+  provider: "openai",
+  openai: {
+    model: "qwen-plus",
   },
   modelConfig: {
     temperature: 0.75,
-    maxTokens: 1024,
+    maxTokens: 256,
     topP: 0.9,
     frequencyPenalty: 0.3,
     presencePenalty: 0.15,
-    enableThinking: true, // CF Qwen3 关 thinking 易 content 空
   },
 
   getSystemPrompt(): string {

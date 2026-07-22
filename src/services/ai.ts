@@ -16,7 +16,7 @@ function createModelProvider(env: Env, personaName?: string): ModelProvider {
   const persona = getPersona(personaName);
 
   if (persona.provider === "openai") {
-    const { endpoint, apiKey } = resolveOpenAICredentials(env);
+    const { endpoint, apiKey } = resolveOpenAICredentials(env, personaName);
     const model = resolveOpenAIModelForId(env, personaName, persona);
 
     return new OpenAIProvider(

@@ -24,7 +24,7 @@
       "database_id": "YOUR_STATS_DATABASE_ID"
     }
   ],
-  // LLM：secret 放 OPENAI_ENDPOINT / OPENAI_API_KEY（及可选 OPENAI_MODEL_*）；本地见 .dev.vars
+  // LLM secrets: OPENAI_ENDPOINT / OPENAI_API_KEY (+ optional OPENAI_*_<ID>); local: .dev.vars
   "vars": {
     "ENVIRONMENT": "production"
   }

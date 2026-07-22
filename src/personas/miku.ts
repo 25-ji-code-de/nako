@@ -23,13 +23,13 @@ export const mikuPersona: PersonaConfig = {
   name: "初音未来",
   provider: "openai",
   openai: {
-    model: "gpt-4.1-mini",
+    model: "deepseek-chat",
   },
   modelConfig: {
     temperature: 0.8,
-    maxTokens: 256,          // ← 从 1024 降下来
+    maxTokens: 256,
     topP: 0.9,
-    frequencyPenalty: 0.2,   // ← 减少重复
+    frequencyPenalty: 0.2,
     presencePenalty: 0.1,
   },
 

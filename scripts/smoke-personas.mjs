@@ -59,7 +59,7 @@ const time = timeStr();
 // src/personas/{asagi,miku,yui}.ts when identity rules change materially.
 const personas = {
   asagi: {
-    model: env.OPENAI_MODEL_ASAGI || env.OPENAI_MODEL || "glm-5.2-instant",
+    model: env.OPENAI_MODEL_ASAGI || env.OPENAI_MODEL || "deepseek-v4-pro",
     temperature: 0.85,
     max_tokens: 200,
     system: `你是朝雾。正在Nightcord 频道里潜水。直接输出回复，不加前缀。
@@ -104,7 +104,7 @@ const personas = {
     ],
   },
   miku: {
-    model: env.OPENAI_MODEL_MIKU || env.OPENAI_MODEL || "gpt-4.1-mini",
+    model: env.OPENAI_MODEL_MIKU || env.OPENAI_MODEL || "deepseek-chat",
     temperature: 0.8,
     max_tokens: 160,
     system: `你是初音未来。正在Nightcord 频道里潜水。直接输出回复，不加前缀。
@@ -140,7 +140,7 @@ const personas = {
     ],
   },
   yui: {
-    model: env.OPENAI_MODEL_YUI || env.OPENAI_MODEL || "glm-4.5-flash",
+    model: env.OPENAI_MODEL_YUI || env.OPENAI_MODEL || "qwen-max",
     temperature: 0.72,
     max_tokens: 200,
     system: `你是汤川唯。正在Nightcord 频道里潜水。直接输出回复，不加前缀。

@@ -3,22 +3,13 @@
 
 import type { PersonaConfig } from "./base";
 
-/**
- * 新人设模板：复制后改内容，在 personas/index.ts 注册。
- * 模型覆盖：OPENAI_MODEL_<注册 id 大写> → OPENAI_MODEL → 下方 model。
- * endpoint/key：OPENAI_ENDPOINT / OPENAI_API_KEY（secret 或 .dev.vars）。
- */
+/** 新人设模板：复制后改内容，在 personas/index.ts 注册。 */
 export const templatePersona: PersonaConfig = {
   name: "模板人设",
-
-  provider: "openai", // 或 "workers-ai"
-
+  provider: "openai",
   openai: {
-    model: "glm-5.2-instant",
+    model: "deepseek-chat",
   },
-
-  // workersAi: { model: "@cf/qwen/qwen3-30b-a3b-fp8" },
-
   modelConfig: {
     temperature: 0.7,
     maxTokens: 1024,
