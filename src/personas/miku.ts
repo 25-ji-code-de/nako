@@ -23,7 +23,7 @@ export const mikuPersona: PersonaConfig = {
   name: "初音未来",
   provider: "openai",
   openai: {
-    model: "grok-4.20-beta",
+    model: "gpt-4.1-mini",
   },
   modelConfig: {
     temperature: 0.8,

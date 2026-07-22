@@ -3,10 +3,9 @@
 
 import type { ModelProvider, ModelConfig } from "./base";
 import type { HistoryMessage, AIResponse } from "../types";
+import { appendUserMessage, formatChatHistory } from "./format-history";
 
-/**
- * OpenAI 格式 API 提供商（支持任何兼容 OpenAI 格式的 API）
- */
+/** OpenAI 兼容 API 提供商 */
 export class OpenAIProvider implements ModelProvider {
   private readonly fullEndpoint: string;
 
@@ -16,57 +15,20 @@ export class OpenAIProvider implements ModelProvider {
     private model: string = "gpt-3.5-turbo",
     private config: ModelConfig = {}
   ) {
-    // 智能补全endpoint路径，支持多种格式
     this.fullEndpoint = this.normalizeEndpoint(endpoint);
   }
 
-  /**
-   * 规范化endpoint，自动补全 /v1/chat/completions
-   * 支持的输入格式：
-   * - https://api.example.com → https://api.example.com/v1/chat/completions
-   * - https://api.example.com/ → https://api.example.com/v1/chat/completions
-   * - https://api.example.com/v1 → https://api.example.com/v1/chat/completions
-   * - https://api.example.com/v1/ → https://api.example.com/v1/chat/completions
-   * - https://api.example.com/v1/chat/completions → https://api.example.com/v1/chat/completions (不变)
-   */
+  /** 补全到 …/v1/chat/completions（已是完整路径则不动） */
   private normalizeEndpoint(endpoint: string): string {
-    // 移除末尾的斜杠
-    let normalized = endpoint.replace(/\/+$/, '');
+    let normalized = endpoint.replace(/\/+$/, "");
 
-    // 如果已经包含完整路径，直接返回
-    if (normalized.endsWith('/chat/completions')) {
+    if (normalized.endsWith("/chat/completions")) {
       return normalized;
     }
-
-    // 如果以 /v1 结尾，补全 /chat/completions
-    if (normalized.endsWith('/v1')) {
-      return normalized + '/chat/completions';
+    if (normalized.endsWith("/v1")) {
+      return normalized + "/chat/completions";
     }
-
-    // 否则补全 /v1/chat/completions
-    return normalized + '/v1/chat/completions';
-  }
-
-  /**
-   * 将历史消息转换为 role-based 消息数组
-   * @param history 历史消息数组
-   * @param currentPersonaName 当前PERSONA的名称（userId字段中的值）
-   */
-  private formatHistory(history: HistoryMessage[], currentPersonaName?: string): Array<{ role: string; content: string }> {
-    if (!history || history.length === 0) return [];
-
-    return history
-      .slice(-20)  // Keep only last 20 messages for context
-      .map(msg => {
-        // 只有当前PERSONA的消息才是assistant，其他都是user
-        const isCurrentPersona = msg.isBot && currentPersonaName && msg.userId === currentPersonaName;
-        const role = isCurrentPersona ? "assistant" : "user";
-
-        // assistant不加前缀，user加前缀以区分不同说话者
-        const content = isCurrentPersona ? msg.message : `[${msg.userId}]: ${msg.message}`;
-
-        return { role, content };
-      });
+    return normalized + "/v1/chat/completions";
   }
 
   async chat(
@@ -77,10 +39,15 @@ export class OpenAIProvider implements ModelProvider {
     stream: boolean = false,
     personaName?: string
   ): Promise<AIResponse | ReadableStream> {
+    const historyMessages = formatChatHistory(history, personaName, {
+      limit: 30,
+      mergeConsecutive: true,
+    });
+    appendUserMessage(historyMessages, userId, userMessage);
+
     const messages = [
       { role: "system", content: systemPrompt },
-      ...this.formatHistory(history, personaName),
-      { role: "user", content: `[${userId}]: ${userMessage}` }
+      ...historyMessages,
     ];
 
     const requestBody = {
@@ -98,7 +65,7 @@ export class OpenAIProvider implements ModelProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(requestBody),
     });
@@ -110,18 +77,18 @@ export class OpenAIProvider implements ModelProvider {
 
     if (stream) {
       return response.body as ReadableStream;
-    } else {
-      const result = await response.json() as any;
-      const responseText = result.choices?.[0]?.message?.content || "";
-
-      return {
-        response: responseText,
-        usage: {
-          promptTokens: result.usage?.prompt_tokens || 0,
-          completionTokens: result.usage?.completion_tokens || 0,
-          totalTokens: result.usage?.total_tokens || 0,
-        }
-      };
     }
+
+    const result = (await response.json()) as any;
+    const responseText = result.choices?.[0]?.message?.content || "";
+
+    return {
+      response: responseText,
+      usage: {
+        promptTokens: result.usage?.prompt_tokens || 0,
+        completionTokens: result.usage?.completion_tokens || 0,
+        totalTokens: result.usage?.total_tokens || 0,
+      },
+    };
   }
 }

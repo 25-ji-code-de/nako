@@ -3,19 +3,7 @@
 
 import type { HistoryMessage, AIResponse } from "../types";
 
-/**
- * 基础模型提供商接口
- */
 export interface ModelProvider {
-  /**
-   * 生成对话回复
-   * @param systemPrompt 系统提示词
-   * @param userMessage 用户消息
-   * @param userId 用户 ID
-   * @param history 历史消息
-   * @param stream 是否流式输出
-   * @param personaName 当前PERSONA名称（用于区分历史消息中的角色）
-   */
   chat(
     systemPrompt: string,
     userMessage: string,
@@ -26,13 +14,15 @@ export interface ModelProvider {
   ): Promise<AIResponse | ReadableStream>;
 }
 
-/**
- * 模型配置
- */
 export interface ModelConfig {
   temperature?: number;
   maxTokens?: number;
   topP?: number;
   frequencyPenalty?: number;
   presencePenalty?: number;
+  /**
+   * 模型 thinking（Qwen3 等）。默认 true。
+   * 注意：CF Workers AI 上对 Qwen3 关 thinking 容易 content 为空。
+   */
+  enableThinking?: boolean;
 }

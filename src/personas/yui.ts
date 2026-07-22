@@ -61,7 +61,7 @@ export const yuiPersona: PersonaConfig = {
   name: "汤川唯",
   provider: "openai",
   openai: {
-    model: "grok-4.20-beta",
+    model: "glm-4.5-flash",
   },
   modelConfig: {
     temperature: 0.72,

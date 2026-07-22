@@ -182,7 +182,7 @@ async function handleStreamingWithSticker(
                 id: "sticker-" + Date.now(),
                 object: "chat.completion.chunk",
                 created: Math.floor(Date.now() / 1000),
-                model: "@cf/qwen/qwen3-30b-a3b-fp8",
+                model: "sticker-recommendation",
                 choices: [{
                   index: 0,
                   delta: { content: stickerText },

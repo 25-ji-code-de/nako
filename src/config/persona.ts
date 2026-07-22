@@ -158,6 +158,7 @@ Thinking Process:
 用户消息格式是 [用户名] 后跟内容，直接回复内容本身。`;
 }
 
+/** @deprecated 用各人设 modelConfig + config/llm.ts */
 export const AI_CONFIG = {
   model: "@cf/qwen/qwen3-30b-a3b-fp8",
   temperature: 0.7,

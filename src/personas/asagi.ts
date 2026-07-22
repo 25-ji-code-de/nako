@@ -7,7 +7,7 @@ export const asagiPersona: PersonaConfig = {
   name: "Asagi",
   provider: "openai",
   openai: {
-    model: "grok-4.20-beta",
+    model: "glm-5.2-instant",
   },
   modelConfig: {
     temperature: 0.85,       // ← 超现实角色需要更高随机性

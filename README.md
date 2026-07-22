@@ -266,12 +266,64 @@ curl -X POST http://localhost:8787/api/chat \
 
 ### 部署
 
-部署到 Cloudflare Workers：
+#### 1. 登录 Cloudflare
+
 ```bash
-npm run deploy
+npx wrangler login
 ```
 
-表情包搜索功能的详细配置说明见 [STICKER_DEPLOYMENT.md](./STICKER_DEPLOYMENT.md)。
+#### 2. 本地配置文件
+
+```bash
+cp wrangler.jsonc.example wrangler.jsonc
+# 编辑 wrangler.jsonc：填入 AUTH_DB / DB 的 database_id，按需改 name / 路由
+```
+
+本地 LLM 密钥（openai 人设）写入 **`.dev.vars`**（勿提交）：
+
+```bash
+# 参考 .env.example
+OPENAI_ENDPOINT=https://your-openai-compatible-gateway.example
+OPENAI_API_KEY=sk-...
+```
+
+#### 3. 生产 Secrets
+
+```bash
+npx wrangler secret put OPENAI_ENDPOINT   # 你的 OpenAI 兼容网关根 URL
+npx wrangler secret put OPENAI_API_KEY
+
+# 可选：覆盖某个人设模型（注册 id 大写）
+# npx wrangler secret put OPENAI_MODEL_ASAGI
+# npx wrangler secret put WORKERS_AI_MODEL   # Nako 用 Workers AI 时
+```
+
+Workers AI、Vectorize、D1 绑定在 `wrangler.jsonc` 里配置，不需要 secret 写模型路径（除非你要覆盖 `WORKERS_AI_MODEL`）。
+
+#### 4. 发布
+
+```bash
+npm run deploy
+# 等价: npx wrangler deploy
+```
+
+部署成功后终端会打印 `*.workers.dev` 地址。自定义域名在 `wrangler.jsonc` 的 `routes` 里配置。
+
+#### 5. 冒烟测试
+
+```bash
+# 经 Worker（含鉴权 + 真人设 prompt）
+curl -X POST https://你的域名/api/chat?persona=miku \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer 你的_SEKAI_PASS_TOKEN" \
+  -d "{\"userId\":\"TestUser\",\"message\":\"今天好累啊\",\"history\":[]}"
+
+# 本地直连网关（不经 Worker / 鉴权；prompt 为精简副本，只验模型可达与粗语气）
+npm run smoke:personas
+# 读取 .dev.vars 的 OPENAI_*
+```
+
+表情包 Vectorize 见 [STICKER_DEPLOYMENT.md](./STICKER_DEPLOYMENT.md)（可选，未绑定时聊天仍可用、只是无贴纸）。
 
 ## 项目结构
 
@@ -287,18 +339,23 @@ nightcord-nako/
 │   ├── services/
 │   │   ├── ai.ts             # AI 服务封装
 │   │   └── sticker.ts        # 表情搜索服务
+│   ├── models/               # Workers AI / OpenAI 兼容 Provider
+│   │   └── format-history.ts # 群聊历史 → role messages（两 Provider 共用）
+│   ├── personas/             # 多人设（provider / model / modelConfig / prompt）
 │   ├── config/
-│   │   └── persona.ts        # Nako 系统提示词
+│   │   ├── llm.ts            # endpoint / key / model 解析（Env 优先）
+│   │   └── persona.ts        # 遗留 Nako prompt 辅助
 │   ├── types/
 │   │   └── index.ts          # TypeScript 类型定义
 │   └── utils/
 │       ├── validation.ts     # 请求验证
 │       └── response.ts       # 响应格式化
 ├── scripts/
+│   ├── smoke-personas.mjs    # 本地 openai 人设抽检（精简 prompt）
 │   ├── prepare-stickers.ts   # 预处理表情数据
 │   ├── upload-vectors.ts     # 上传到 Vectorize
 │   └── test-search.ts        # 本地测试搜索
-├── wrangler.toml             # Cloudflare Workers 配置
+├── wrangler.jsonc.example    # Cloudflare Workers 配置示例
 ├── stickers.json             # 表情数据库
 ├── package.json
 ├── tsconfig.json
@@ -308,14 +365,50 @@ nightcord-nako/
 
 ## 配置说明
 
-### AI 参数
+### LLM API（endpoint / key / 每人设独立 model）
 
-- **模型**: `@cf/qwen/qwen3-30b-a3b-fp8`
-- **Temperature**: 0.7
-- **Max Tokens**: 1024
-- **Top P**: 0.85
-- **Frequency Penalty**: 0.15
-- **Presence Penalty**: 0.2
+人设可选 `workers-ai` 或 `openai`（任意 OpenAI 兼容网关）。
+
+```bash
+# 生产 Secrets
+npx wrangler secret put OPENAI_ENDPOINT
+npx wrangler secret put OPENAI_API_KEY
+
+# 可选：只改某个人设的模型（注册 id 大写，如 asagi → OPENAI_MODEL_ASAGI）
+npx wrangler secret put OPENAI_MODEL_ASAGI
+
+# 可选：全局模型覆盖（调试用；优先级低于 OPENAI_MODEL_<ID>）
+# npx wrangler secret put OPENAI_MODEL
+
+# 本地：写入 .dev.vars（见 .env.example，已 gitignore）
+```
+
+| 变量 | 作用 |
+|------|------|
+| `OPENAI_ENDPOINT` / `OPENAI_API_KEY` | openai 人设必填 |
+| `OPENAI_MODEL_<ID>` | 人设专属模型，**最高优先** |
+| `OPENAI_MODEL` | 全局覆盖（调试；盖不过 `OPENAI_MODEL_<ID>`） |
+| `WORKERS_AI_MODEL` | Workers AI 模型覆盖 |
+
+OpenAI 模型解析：`OPENAI_MODEL_<ID>` → `OPENAI_MODEL` → 人设 `openai.model` → `deepseek-v4-flash`。
+
+采样参数仍在各人设 `modelConfig`。
+
+### 人设与默认模型
+
+| 人设 id | Provider | 代码默认 model |
+|---------|----------|----------------|
+| nako | workers-ai | `@cf/qwen/qwen3-30b-a3b-fp8` |
+| asagi | openai | `glm-5.2-instant` |
+| miku | openai | `gpt-4.1-mini` |
+| yui | openai | `glm-4.5-flash` |
+
+请求：`POST /api/chat?persona=asagi`（省略时默认 nako）。
+
+### Workers AI / Qwen3 注意
+
+- Nako 默认 `enableThinking: true`。在 CF Workers AI 上对 Qwen3 传 `enable_thinking: false`（`chat_template_kwargs`）实测容易把 `content` 掐空，勿随意关。
+- 若模型只把短回复写在 `reasoning_content` 里，Worker 会尝试从中抠出可见回复，并在日志打 `[workers-ai] empty content; recovered…`；**不会**把思维链回给客户端。
 
 ### Cloudflare Workers AI 响应格式
 

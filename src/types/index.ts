@@ -12,7 +12,7 @@ export interface ChatRequest {
   userId: string;
   message: string;
   history?: HistoryMessage[];
-  stream?: boolean;  // Enable streaming response
+  stream?: boolean;
 }
 
 // Response types
@@ -25,7 +25,7 @@ export interface TokenUsage {
 export interface ChatSuccessResponse {
   success: true;
   response: string;
-  reasoningContent?: string;  // Optional reasoning/thinking process
+  reasoningContent?: string;
   usage: TokenUsage;
 }
 
@@ -42,7 +42,7 @@ export type ChatResponse = ChatSuccessResponse | ChatErrorResponse;
 // AI Service types
 export interface AIResponse {
   response: string;
-  reasoningContent?: string;  // Optional reasoning/thinking process
+  reasoningContent?: string;
   usage: TokenUsage;
 }
 
@@ -56,11 +56,16 @@ export interface ValidationResult {
 export interface Env {
   AI: Ai;
   VECTORIZE: VectorizeIndex;
-  AUTH_DB: D1Database;  // SEKAI Pass 数据库
-  DB: D1Database;  // pjsekai 数据库（用于统计）
+  AUTH_DB: D1Database; // SEKAI Pass
+  DB: D1Database; // pjsekai 统计
   ENVIRONMENT?: string;
 
-  // OpenAI 格式 API 配置（从 Cloudflare Secrets 获取）
-  OPENAI_ENDPOINT?: string;  // OpenAI 兼容 API 端点
-  OPENAI_API_KEY?: string;   // API Key (sk-xxx)
+  // OpenAI 兼容（secret / .dev.vars）
+  OPENAI_ENDPOINT?: string;
+  OPENAI_API_KEY?: string;
+  /** 全局模型覆盖；低于 OPENAI_MODEL_<ID>，见 config/llm.ts */
+  OPENAI_MODEL?: string;
+  // 人设专属：OPENAI_MODEL_<注册 id 大写>，运行时动态读，不在此枚举
+
+  WORKERS_AI_MODEL?: string;
 }
