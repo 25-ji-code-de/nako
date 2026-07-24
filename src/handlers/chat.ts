@@ -47,7 +47,8 @@ export async function handleChat(request: Request, env: Env, user: User): Promis
 
     // Handle streaming response
     if (body.stream) {
-      // For streaming, pass through immediately and add sticker at the end
+      // Fire-and-forget usage (do not await — stream already started path)
+      void reportUsage(env, user, personaName);
       return handleStreamingWithSticker(aiResponse as ReadableStream, env, body, personaName);
     }
 
@@ -82,6 +83,9 @@ export async function handleChat(request: Request, env: Env, user: User): Promis
       }
     }
 
+    // Only count successful generations toward usage
+    void reportUsage(env, user, personaName);
+
     return createSuccessResponse(finalResponse, response.usage, response.reasoningContent);
 
   } catch (error) {
@@ -91,11 +95,6 @@ export async function handleChat(request: Request, env: Env, user: User): Promis
       "An internal error occurred",
       500
     );
-  } finally {
-    // 上报使用统计（异步，不阻塞响应）
-    reportUsage(env, user, personaName).catch(err => {
-      console.error("Failed to report usage:", err);
-    });
   }
 }
 
@@ -212,10 +211,10 @@ async function handleStreamingWithSticker(
 
   return new Response(newStream, {
     headers: {
-      "Content-Type": "text/event-stream",
+      "Content-Type": "text/event-stream; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive",
     },
@@ -227,8 +226,12 @@ async function handleStreamingWithSticker(
  */
 async function reportUsage(env: Env, user: User, personaName?: string): Promise<void> {
   const persona = personaName || "nako";
+  if (!env.DB) {
+    console.debug("reportUsage: DB binding missing, skip");
+    return;
+  }
   try {
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toISOString().split("T")[0];
     const now = Date.now();
 
     // 插入活动记录
@@ -237,13 +240,13 @@ async function reportUsage(env: Env, user: User, personaName?: string): Promise<
       VALUES (?, ?, ?, ?, ?)
     `).bind(
       user.id,
-      'nako',
+      "nako",
       `${persona}_conversation`,
       JSON.stringify({ timestamp: now, persona }),
-      now
+      now,
     ).run();
 
-    // 更新统计数据
+    // 更新统计数据（规范 metric: {persona}_conversations）
     await env.DB.prepare(`
       INSERT INTO user_stats (user_id, project, metric_name, metric_value, date, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -253,15 +256,15 @@ async function reportUsage(env: Env, user: User, personaName?: string): Promise<
         updated_at = ?
     `).bind(
       user.id,
-      'nako',
+      "nako",
       `${persona}_conversations`,
-      '1',
+      "1",
       date,
       now,
       now,
-      now
+      now,
     ).run();
   } catch (error) {
-    console.error('Error reporting usage:', error);
+    console.error("Error reporting usage:", error);
   }
 }

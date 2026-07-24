@@ -3,10 +3,18 @@
 
 import type { ChatSuccessResponse, ChatErrorResponse, TokenUsage } from "../types";
 
+const JSON_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json; charset=utf-8",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "X-Content-Type-Options": "nosniff",
+};
+
 export function createSuccessResponse(
   response: string,
   usage: TokenUsage,
-  reasoningContent?: string
+  reasoningContent?: string,
 ): Response {
   const body: ChatSuccessResponse = {
     success: true,
@@ -14,26 +22,20 @@ export function createSuccessResponse(
     usage,
   };
 
-  // Only include reasoningContent if it exists
   if (reasoningContent) {
     body.reasoningContent = reasoningContent;
   }
 
   return new Response(JSON.stringify(body), {
     status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: JSON_HEADERS,
   });
 }
 
 export function createErrorResponse(
   code: string,
   message: string,
-  status: number = 400
+  status: number = 400,
 ): Response {
   const body: ChatErrorResponse = {
     success: false,
@@ -45,11 +47,8 @@ export function createErrorResponse(
 
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: JSON_HEADERS,
   });
 }
+
+export { JSON_HEADERS as CORS_JSON_HEADERS };

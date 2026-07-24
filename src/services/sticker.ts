@@ -83,7 +83,7 @@ async function searchVectorize(
   let matches = results.matches.map(match => ({
     id: match.id,
     score: match.score,
-    metadata: match.metadata as StickerMetadata,
+    metadata: match.metadata as unknown as StickerMetadata,
   }));
 
   if (excludeIds && excludeIds.size > 0) {

@@ -55,9 +55,11 @@ export interface ValidationResult {
 // Environment bindings
 export interface Env {
   AI: Ai;
-  VECTORIZE: VectorizeIndex;
+  /** Optional — sticker recommend returns 503 when missing */
+  VECTORIZE?: VectorizeIndex;
   AUTH_DB: D1Database; // SEKAI Pass
-  DB: D1Database; // pjsekai 统计
+  /** Optional — usage reporting is skipped when missing */
+  DB?: D1Database;
   ENVIRONMENT?: string;
 
   OPENAI_ENDPOINT?: string;

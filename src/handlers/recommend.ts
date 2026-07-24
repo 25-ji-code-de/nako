@@ -38,6 +38,9 @@ function parseGetRequest(request: Request): ParsedParams | Response {
   }
 
   const prompt = promptParam.trim();
+  if (prompt.length > 500) {
+    return createErrorResponse("INVALID_REQUEST", "prompt too long (max 500 characters)");
+  }
 
   const topKParam = url.searchParams.get("topK");
   let topK = topKParam ? parseInt(topKParam, 10) : 5;
@@ -68,6 +71,9 @@ async function parsePostRequest(request: Request): Promise<ParsedParams | Respon
   }
 
   const prompt = body.prompt.trim();
+  if (prompt.length > 500) {
+    return createErrorResponse("INVALID_REQUEST", "prompt too long (max 500 characters)");
+  }
   const topK = body.topK && body.topK > 0 && body.topK <= 20 ? body.topK : 5;
   const excludeRecent = body.excludeRecent;
 
@@ -84,10 +90,10 @@ function createSuccessResponse(results: StickerResult[], query: string): Respons
   return new Response(JSON.stringify(response), {
     status: 200,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });
 }

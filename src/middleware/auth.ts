@@ -11,21 +11,30 @@ export interface User {
   email: string;
 }
 
+const MAX_TOKEN_LEN = 512;
+
 /**
  * 验证 access token
  * 直接查询 SEKAI Pass 数据库，避免额外的网络请求
  */
 export async function authenticate(request: Request, env: Env): Promise<User | null> {
-  const authHeader = request.headers.get('Authorization');
+  const authHeader = request.headers.get("Authorization");
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return null;
   }
 
-  const token = authHeader.substring(7);
+  const token = authHeader.slice(7).trim();
+  if (!token || token.length > MAX_TOKEN_LEN) {
+    return null;
+  }
+
+  if (!env.AUTH_DB) {
+    console.error("Authentication error: AUTH_DB binding missing");
+    return null;
+  }
 
   try {
-    // 查询 SEKAI Pass 数据库验证 token
     const result = await env.AUTH_DB.prepare(`
       SELECT
         at.user_id,
@@ -41,19 +50,18 @@ export async function authenticate(request: Request, env: Env): Promise<User | n
       return null;
     }
 
-    // 检查 token 是否过期
-    const expiresAt = result.expires_at as number;
-    if (expiresAt < Date.now()) {
+    const expiresAt = Number(result.expires_at);
+    if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) {
       return null;
     }
 
     return {
       id: result.user_id as string,
       username: result.username as string,
-      email: result.email as string
+      email: result.email as string,
     };
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error("Authentication error:", error);
     return null;
   }
 }

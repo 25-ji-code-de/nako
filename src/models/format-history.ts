@@ -15,6 +15,7 @@ export interface FormatHistoryOptions {
 /**
  * 群聊历史 → role messages。
  * 当前 persona 的 bot → assistant；其余 → user，带 [userId]: 前缀。
+ * 空 message 跳过，避免上游对空 content 报错。
  */
 export function formatChatHistory(
   history: HistoryMessage[] | undefined,
@@ -27,14 +28,18 @@ export function formatChatHistory(
   const mergeConsecutive = options.mergeConsecutive ?? true;
   const recent = history.slice(-limit);
 
-  const mapped: ChatRoleMessage[] = recent.map((msg) => {
+  const mapped: ChatRoleMessage[] = [];
+  for (const msg of recent) {
+    if (!msg || typeof msg.message !== "string") continue;
+    const text = msg.message.trim();
+    if (!text) continue;
     const isCurrentPersona =
-      msg.isBot && !!currentPersonaName && msg.userId === currentPersonaName;
-    return {
+      !!msg.isBot && !!currentPersonaName && msg.userId === currentPersonaName;
+    mapped.push({
       role: isCurrentPersona ? "assistant" : "user",
-      content: isCurrentPersona ? msg.message : `[${msg.userId}]: ${msg.message}`,
-    };
-  });
+      content: isCurrentPersona ? text : `[${msg.userId}]: ${text}`,
+    });
+  }
 
   if (!mergeConsecutive) return mapped;
 
