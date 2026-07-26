@@ -5,13 +5,13 @@ import type { Env } from "./types";
 import { handleChat } from "./handlers/chat";
 import { handleRecommend } from "./handlers/recommend";
 import { authenticate } from "./middleware/auth";
-import { createErrorResponse } from "./utils/response";
+import { createErrorResponse, CORS_JSON_HEADERS } from "./utils/response";
+import { handleCors } from "@25-ji-code-de/sekai-worker-kit";
 
+/** 预检用的 CORS 头。与业务响应共用同一套值，只是多允许 HEAD（健康检查）。 */
 const CORS_PREFLIGHT_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
+  ...CORS_JSON_HEADERS,
   "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
 };
 
 export default {
@@ -19,12 +19,8 @@ export default {
     const url = new URL(request.url);
 
     // Handle CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: CORS_PREFLIGHT_HEADERS,
-      });
-    }
+    const preflight = handleCors(request, CORS_PREFLIGHT_HEADERS);
+    if (preflight) return preflight;
 
     // Public health / index (no auth) — useful for uptime checks
     if (

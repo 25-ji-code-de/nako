@@ -2,7 +2,7 @@
 // Copyright 2026 The 25-ji-code-de Team
 
 import type { Env } from "../types";
-import { createErrorResponse } from "../utils/response";
+import { createErrorResponse, CORS_JSON_HEADERS } from "../utils/response";
 import { searchStickersWithScores, extractRecentStickers } from "../services/sticker";
 
 interface RecommendRequest {
@@ -89,12 +89,7 @@ function createSuccessResponse(results: StickerResult[], query: string): Respons
 
   return new Response(JSON.stringify(response), {
     status: 200,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: CORS_JSON_HEADERS,
   });
 }
 

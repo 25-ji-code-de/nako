@@ -19,3 +19,5 @@ jobs:
         run: npm ci || npm install
       - name: Typecheck
         run: npm run type-check
+      - name: Test
+        run: npm test

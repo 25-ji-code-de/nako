@@ -1,67 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-// 认证中间件 - 验证 SEKAI Pass 的 access token
+// 认证中间件 —— 实现已移至 @25-ji-code-de/sekai-worker-kit。
+//
+// 此前这个文件与 gateway/src/middleware/auth.js 是同一个函数的 TS / JS
+// 两份逐字拷贝（相同的 SQL、相同的 MAX_TOKEN_LEN = 512、相同的过期判断）。
+//
+// 行为不变：任何失败路径返回 null，不抛异常。
+// 返回值新增 clientId 与 scopes —— access_tokens 的这两列此前从未被读取。
+//
+// 想收紧 scope 时：authenticate(request, env, { requireScopes: ['profile'] })
 
-import type { Env } from "../types";
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-}
-
-const MAX_TOKEN_LEN = 512;
+export { authenticate, extractBearerToken, MAX_TOKEN_LEN } from "@25-ji-code-de/sekai-worker-kit";
+export type { SekaiUser } from "@25-ji-code-de/sekai-worker-kit";
 
 /**
- * 验证 access token
- * 直接查询 SEKAI Pass 数据库，避免额外的网络请求
+ * @deprecated 请改用 worker-kit 的 `SekaiUser`。
+ * 保留以兼容本仓既有的 `import type { User }`。
  */
-export async function authenticate(request: Request, env: Env): Promise<User | null> {
-  const authHeader = request.headers.get("Authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-
-  const token = authHeader.slice(7).trim();
-  if (!token || token.length > MAX_TOKEN_LEN) {
-    return null;
-  }
-
-  if (!env.AUTH_DB) {
-    console.error("Authentication error: AUTH_DB binding missing");
-    return null;
-  }
-
-  try {
-    const result = await env.AUTH_DB.prepare(`
-      SELECT
-        at.user_id,
-        at.expires_at,
-        u.username,
-        u.email
-      FROM access_tokens at
-      JOIN users u ON at.user_id = u.id
-      WHERE at.token = ?
-    `).bind(token).first();
-
-    if (!result) {
-      return null;
-    }
-
-    const expiresAt = Number(result.expires_at);
-    if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) {
-      return null;
-    }
-
-    return {
-      id: result.user_id as string,
-      username: result.username as string,
-      email: result.email as string,
-    };
-  } catch (error) {
-    console.error("Authentication error:", error);
-    return null;
-  }
-}
+export type { SekaiUser as User } from "@25-ji-code-de/sekai-worker-kit";
