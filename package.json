@@ -19,12 +19,16 @@
     "vectorize",
     "sticker-recommendation"
   ],
-  "author": "bili_47177171806",
+  "author": "The 25-ji-code-de Team",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bili-47177171806/nako.git"
+    "url": "git+https://github.com/25-ji-code-de/nako.git"
   },
+  "bugs": {
+    "url": "https://github.com/25-ji-code-de/nako/issues"
+  },
+  "homepage": "https://github.com/25-ji-code-de/nako#readme",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240129.0",
     "dotenv": "^17.2.4",
