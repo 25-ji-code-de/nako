@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { ValidationResult } from "../types";
+import type { ValidationResult } from "../types/index.ts";
 
 const MAX_MESSAGE_LEN = 2000;
 const MAX_USER_ID_LEN = 128;

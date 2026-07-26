@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { Env, HistoryMessage, AIResponse } from "../types";
-import type { ModelProvider } from "../models/base";
-import { WorkersAIProvider } from "../models/workers-ai";
-import { OpenAIProvider } from "../models/openai";
-import { getPersona } from "../personas";
+import type { Env, HistoryMessage, AIResponse } from "../types/index.ts";
+import type { ModelProvider } from "../models/base.ts";
+import { WorkersAIProvider } from "../models/workers-ai.ts";
+import { OpenAIProvider } from "../models/openai.ts";
+import { getPersona } from "../personas/index.ts";
 import {
   resolveOpenAICredentials,
   resolveOpenAIModelForId,
   resolveWorkersAIModel,
-} from "../config/llm";
+} from "../config/llm.ts";
 
 function createModelProvider(env: Env, personaName?: string): ModelProvider {
   const persona = getPersona(personaName);

@@ -7,7 +7,7 @@
 // 各仓之间也各写各的（gateway 有独立 middleware，storage-worker 散落 9 处）。
 
 import { errorResponse, CORS_HEADERS, JSON_HEADERS } from "@25-ji-code-de/sekai-worker-kit";
-import type { ChatSuccessResponse, TokenUsage } from "../types";
+import type { ChatSuccessResponse, TokenUsage } from "../types/index.ts";
 
 /**
  * nako 的 JSON 响应头。
