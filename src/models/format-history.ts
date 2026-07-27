@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { HistoryMessage } from "../types";
+import type { HistoryMessage } from "../types/index.ts";
 
 export type ChatRoleMessage = { role: string; content: string };
 

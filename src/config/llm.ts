@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { Env } from "../types";
-import type { PersonaConfig } from "../personas/base";
+import type { Env } from "../types/index.ts";
+import type { PersonaConfig } from "../personas/base.ts";
 
 export const DEFAULT_WORKERS_AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
 export const DEFAULT_OPENAI_MODEL = "deepseek-chat";

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { ModelProvider, ModelConfig } from "./base";
-import type { HistoryMessage, AIResponse } from "../types";
-import { appendUserMessage, formatChatHistory } from "./format-history";
+import type { ModelProvider, ModelConfig } from "./base.ts";
+import type { HistoryMessage, AIResponse } from "../types/index.ts";
+import { appendUserMessage, formatChatHistory } from "./format-history.ts";
 
 /** OpenAI 兼容 API 提供商 */
 export class OpenAIProvider implements ModelProvider {

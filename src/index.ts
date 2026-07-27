@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { Env } from "./types";
-import { handleChat } from "./handlers/chat";
-import { handleRecommend } from "./handlers/recommend";
-import { authenticate } from "./middleware/auth";
-import { createErrorResponse, CORS_JSON_HEADERS } from "./utils/response";
+import type { Env } from "./types/index.ts";
+import { handleChat } from "./handlers/chat.ts";
+import { handleRecommend } from "./handlers/recommend.ts";
+import { authenticate } from "./middleware/auth.ts";
+import { createErrorResponse, CORS_JSON_HEADERS } from "./utils/response.ts";
 import { handleCors } from "@25-ji-code-de/sekai-worker-kit";
 
 /** 预检用的 CORS 头。与业务响应共用同一套值，只是多允许 HEAD（健康检查）。 */

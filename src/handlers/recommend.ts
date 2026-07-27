@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { Env } from "../types";
-import { createErrorResponse, CORS_JSON_HEADERS } from "../utils/response";
-import { searchStickersWithScores, extractRecentStickers } from "../services/sticker";
+import type { Env } from "../types/index.ts";
+import { createErrorResponse, CORS_JSON_HEADERS } from "../utils/response.ts";
+import { searchStickersWithScores, extractRecentStickers } from "../services/sticker.ts";
+import {
+  normalizeTopK,
+  normalizeExcludeRecent,
+  PROMPT_MAX_LEN,
+} from "./recommend-params.ts";
 
 interface RecommendRequest {
   prompt: string;
@@ -26,7 +31,8 @@ interface RecommendResponse {
 interface ParsedParams {
   prompt: string;
   topK: number;
-  excludeRecent?: string[];
+  /** 归一后一定是数组，可能为空 —— 不再有 undefined 这个第三态 */
+  excludeRecent: string[];
 }
 
 function parseGetRequest(request: Request): ParsedParams | Response {
@@ -38,23 +44,16 @@ function parseGetRequest(request: Request): ParsedParams | Response {
   }
 
   const prompt = promptParam.trim();
-  if (prompt.length > 500) {
-    return createErrorResponse("INVALID_REQUEST", "prompt too long (max 500 characters)");
+  if (prompt.length > PROMPT_MAX_LEN) {
+    return createErrorResponse("INVALID_REQUEST", `prompt too long (max ${PROMPT_MAX_LEN} characters)`);
   }
 
-  const topKParam = url.searchParams.get("topK");
-  let topK = topKParam ? parseInt(topKParam, 10) : 5;
-  if (isNaN(topK) || topK < 1 || topK > 20) {
-    topK = 5;
-  }
-
-  // excludeRecent can be passed as comma-separated values
-  const excludeParam = url.searchParams.get("excludeRecent");
-  const excludeRecent = excludeParam
-    ? excludeParam.split(",").map(s => s.trim()).filter(s => s.length > 0)
-    : undefined;
-
-  return { prompt, topK, excludeRecent };
+  return {
+    prompt,
+    topK: normalizeTopK(url.searchParams.get("topK")),
+    // comma-separated 形式
+    excludeRecent: normalizeExcludeRecent(url.searchParams.get("excludeRecent")),
+  };
 }
 
 async function parsePostRequest(request: Request): Promise<ParsedParams | Response> {
@@ -71,13 +70,16 @@ async function parsePostRequest(request: Request): Promise<ParsedParams | Respon
   }
 
   const prompt = body.prompt.trim();
-  if (prompt.length > 500) {
-    return createErrorResponse("INVALID_REQUEST", "prompt too long (max 500 characters)");
+  if (prompt.length > PROMPT_MAX_LEN) {
+    return createErrorResponse("INVALID_REQUEST", `prompt too long (max ${PROMPT_MAX_LEN} characters)`);
   }
-  const topK = body.topK && body.topK > 0 && body.topK <= 20 ? body.topK : 5;
-  const excludeRecent = body.excludeRecent;
 
-  return { prompt, topK, excludeRecent };
+  // 与 GET 走同一套归一 —— 两个入口是同一个操作，不该给出不同结果
+  return {
+    prompt,
+    topK: normalizeTopK(body.topK),
+    excludeRecent: normalizeExcludeRecent(body.excludeRecent),
+  };
 }
 
 function createSuccessResponse(results: StickerResult[], query: string): Response {
@@ -119,8 +121,8 @@ export async function handleRecommend(request: Request, env: Env): Promise<Respo
       return params;
     }
 
-    // Extract recently used stickers to exclude
-    const excludeIds = params.excludeRecent && Array.isArray(params.excludeRecent)
+    // normalizeExcludeRecent 保证这里一定是 string[]（可能为空）
+    const excludeIds = params.excludeRecent.length > 0
       ? extractRecentStickers(params.excludeRecent, 10)
       : undefined;
 
