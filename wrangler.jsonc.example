@@ -1,5 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // 由 Workers Builds 构建时自动渲染（${VAR} 从 Dashboard 环境变量注入）
+  // 本地开发：复制此文件为 wrangler.jsonc，手动填入真实值
+  //
+  // 需要在 Cloudflare Dashboard 配置以下环境变量：
+  //   AUTH_DB_ID   — sekai_pass_db 的 database ID
+  //   STATS_DB_ID  — pjsekai_db 的 database ID
+  // 真正的 secret（OPENAI_ENDPOINT / OPENAI_API_KEY 等）通过 `wrangler secret` 管理，不在此文件中
+  // 本地开发时 secret 放在 .dev.vars（见 .env.example）
+
   "name": "nightcord-nako",
   "main": "src/index.ts",
   "compatibility_date": "2026-02-10",
@@ -16,15 +25,14 @@
     {
       "binding": "AUTH_DB",
       "database_name": "sekai_pass_db",
-      "database_id": "YOUR_AUTH_DATABASE_ID"
+      "database_id": "${AUTH_DB_ID}"
     },
     {
       "binding": "DB",
       "database_name": "pjsekai_db",
-      "database_id": "YOUR_STATS_DATABASE_ID"
+      "database_id": "${STATS_DB_ID}"
     }
   ],
-  // LLM secrets: OPENAI_ENDPOINT / OPENAI_API_KEY (+ optional OPENAI_*_<ID>); local: .dev.vars
   "vars": {
     "ENVIRONMENT": "production"
   }
