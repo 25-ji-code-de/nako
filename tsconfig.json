@@ -5,6 +5,9 @@
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types"],
     "moduleResolution": "bundler",
+    // 源码里的相对 import 都带 .ts 扩展名 —— Node 的 ESM 解析器要求显式扩展名，
+    // 否则 test/ 里无法直接 import src/。noEmit 为 true 时 TS 允许这样写。
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "strict": true,
     "esModuleInterop": true,

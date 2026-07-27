@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { ModelConfig } from "../models/base";
+import type { ModelConfig } from "../models/base.ts";
 
 export interface PersonaConfig {
   name: string;

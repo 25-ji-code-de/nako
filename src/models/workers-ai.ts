@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { ModelProvider, ModelConfig } from "./base";
-import type { HistoryMessage, AIResponse } from "../types";
-import { appendUserMessage, formatChatHistory } from "./format-history";
+import type { ModelProvider, ModelConfig } from "./base.ts";
+import type { HistoryMessage, AIResponse } from "../types/index.ts";
+import { appendUserMessage, formatChatHistory } from "./format-history.ts";
 
 /** Workers AI；默认 @cf/qwen/qwen3-30b-a3b-fp8，可用 WORKERS_AI_MODEL 覆盖 */
 export class WorkersAIProvider implements ModelProvider {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 The 25-ji-code-de Team
 
-import type { Env, ChatRequest } from "../types";
-import { validateChatRequest } from "../utils/validation";
-import { createSuccessResponse, createErrorResponse } from "../utils/response";
-import { generateAIResponse } from "../services/ai";
-import { getStickerRecommendation, insertStickerIntoMessage } from "../services/sticker";
-import type { User } from "../middleware/auth";
-import { getPersona } from "../personas";
+import type { Env, ChatRequest } from "../types/index.ts";
+import { validateChatRequest } from "../utils/validation.ts";
+import { createSuccessResponse, createErrorResponse, CORS_STREAM_HEADERS } from "../utils/response.ts";
+import { generateAIResponse } from "../services/ai.ts";
+import { getStickerRecommendation, insertStickerIntoMessage } from "../services/sticker.ts";
+import type { User } from "../middleware/auth.ts";
+import { getPersona } from "../personas/index.ts";
 
 export async function handleChat(request: Request, env: Env, user: User): Promise<Response> {
   // 从 URL 查询参数获取 persona
@@ -209,16 +209,7 @@ async function handleStreamingWithSticker(
     }
   });
 
-  return new Response(newStream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
-    },
-  });
+  return new Response(newStream, { headers: CORS_STREAM_HEADERS });
 }
 
 /**
