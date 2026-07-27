@@ -11,7 +11,7 @@
  * 钉住 nightcord 的 nako-ai-service 依赖的那几个字段。
  */
 
-import { test, describe } from 'node:test';
+import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -107,5 +107,61 @@ describe('成功响应形状', () => {
     const body = { success: true, response: '喵', usage: { total_tokens: 1 } };
     assert.equal(body.response, '喵');
     assert.equal('data' in body, false);
+  });
+});
+
+describe('401 的挑战头', () => {
+  /*
+   * 这一组**调 src/utils/response.ts 里真正的 createErrorResponse**，
+   * 不像上面几组那样拿 kit 重新拼一遍。
+   *
+   * 重拼的写法验不了本仓自己那一层：把 createErrorResponse 改坏，
+   * 那些测试照样绿。今天在生态里已经栽过一次同样的事
+   * （sekai-worker-kit 的假 db 让 JOIN 从未被执行）。
+   */
+  let createErrorResponse;
+  before(async () => {
+    ({ createErrorResponse } = await import('../src/utils/response.ts'));
+  });
+
+  test('401 带 WWW-Authenticate —— 客户端唯一能读的认证提示', () => {
+    /*
+     * RFC 6750 §3：Bearer 保护的资源在 401 时必须给出挑战头。
+     *
+     * 实测（2026-07-27）线上没有：
+     *   $ curl -i https://nako.nightcord.de5.net/api/chat
+     *   HTTP/1.1 401 Unauthorized  …（没有 WWW-Authenticate）
+     */
+    const res = createErrorResponse('UNAUTHORIZED', 'Authentication required', 401);
+    assert.equal(res.headers.get('WWW-Authenticate'), 'Bearer');
+  });
+
+  test('浏览器读得到它 —— 401 同时暴露该头', () => {
+    /*
+     * 光发不暴露等于白发：跨域响应默认只暴露 CORS 安全清单里那几个头，
+     * 客户端 res.headers.get() 会返回 null。nightcord 的聊天前端是浏览器 SPA。
+     */
+    const expose = createErrorResponse('UNAUTHORIZED', 'x', 401)
+      .headers.get('Access-Control-Expose-Headers');
+    assert.ok(expose, '401 没有 Access-Control-Expose-Headers');
+    assert.match(expose, /WWW-Authenticate/);
+  });
+
+  test('401 仍然带着原有的 CORS 与 JSON 头', () => {
+    // 加挑战头不能把原来那套挤掉 —— 那会让所有跨域调用直接失败
+    const res = createErrorResponse('UNAUTHORIZED', 'x', 401);
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), '*');
+    assert.match(res.headers.get('Content-Type'), /application\/json/);
+  });
+
+  test('只有 401 带挑战头，别的状态码不带', () => {
+    // 400/403/500 不是「你还没认证」，发 Bearer 挑战头会误导客户端去重新登录
+    for (const status of [400, 403, 404, 500]) {
+      assert.equal(
+        createErrorResponse('X', 'x', status).headers.get('WWW-Authenticate'),
+        null,
+        `${status} 不该带挑战头`,
+      );
+    }
   });
 });
