@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci || npm install
+      - name: Render wrangler config
+        env:
+          AUTH_DB_ID: ${{ secrets.AUTH_DB_ID }}
+          STATS_DB_ID: ${{ secrets.STATS_DB_ID }}
+        run: |
+          envsubst '${AUTH_DB_ID} ${STATS_DB_ID}' < wrangler.jsonc.example > wrangler.jsonc
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
