@@ -2,6 +2,7 @@
 // Copyright 2026 The 25-ji-code-de Team
 
 import type { Env } from "./types/index.ts";
+import { isFirstPartyClient } from "./config/first-party-clients.ts";
 import { handleChat } from "./handlers/chat.ts";
 import { handleRecommend } from "./handlers/recommend.ts";
 import { authenticate } from "./middleware/auth.ts";
@@ -48,6 +49,16 @@ export default {
     const user = await authenticate(request, env);
     if (!user) {
       return createErrorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    // Nako 是 SEKAI 生态内部的推理服务，不是 Pass 的第三方开放 API。
+    // 有效第三方 token 用 403 拒绝，避免把授权失败伪装成需要重新登录。
+    if (!isFirstPartyClient(user.clientId)) {
+      return createErrorResponse(
+        "FORBIDDEN",
+        "This API is restricted to SEKAI first-party clients",
+        403,
+      );
     }
 
     if (request.method === "POST" && url.pathname === "/api/chat") {

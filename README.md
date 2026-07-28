@@ -26,7 +26,9 @@
 
 ## API 接口
 
-所有 API 接口都需要 SEKAI Pass 认证。请在请求头中包含有效的 access token：
+所有 API 接口都需要 SEKAI Pass 认证，并且只供 SEKAI 生态第一方 OAuth client 使用。第三方集成面是 SEKAI Pass 的 OIDC / UserInfo API；仅持有第三方 client 签发的有效 token 不能调用 Nako。
+
+请在请求头中包含有效的 access token：
 
 ```bash
 Authorization: Bearer YOUR_ACCESS_TOKEN
