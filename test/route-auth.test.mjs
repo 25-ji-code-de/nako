@@ -41,6 +41,8 @@ const at = {
   publicBranch: src.indexOf('url.pathname === "/health"'),
   authenticate: src.indexOf('await authenticate(request, env)'),
   reject: src.indexOf('"UNAUTHORIZED"'),
+  firstParty: src.indexOf('isFirstPartyClient(user.clientId)'),
+  forbidden: src.indexOf('"FORBIDDEN"'),
   chat: src.indexOf('url.pathname === "/api/chat"'),
   recommend: src.indexOf('url.pathname === "/api/recommend"'),
 };
@@ -52,15 +54,30 @@ describe('鉴权在业务分发之前', () => {
     }
   });
 
-  test('authenticate 排在所有业务路径之前', () => {
-    assert.ok(at.authenticate < at.chat, '/api/chat 排在了鉴权之前');
-    assert.ok(at.authenticate < at.recommend, '/api/recommend 排在了鉴权之前');
+  test('authenticate 与第一方 client 检查都排在业务路径之前', () => {
+    assert.ok(at.authenticate < at.firstParty, '第一方检查排在 authenticate 之前');
+    assert.ok(at.firstParty < at.chat, '/api/chat 排在了第一方检查之前');
+    assert.ok(at.firstParty < at.recommend, '/api/recommend 排在了第一方检查之前');
   });
 
   test('鉴权失败在业务分发之前就返回 401', () => {
     assert.ok(at.reject > at.authenticate, '401 分支在 authenticate 之前？');
     assert.ok(at.reject < at.chat, '鉴权失败没有在分发前拦下');
     assert.ok(at.reject < at.recommend, '鉴权失败没有在分发前拦下');
+  });
+
+  test('有效第三方 token 在业务分发前返回 403', () => {
+    assert.ok(at.forbidden > at.firstParty, '403 分支在第一方检查之前？');
+    assert.ok(at.forbidden < at.chat, '第三方 client 没有在 /api/chat 前被拦下');
+    assert.ok(at.forbidden < at.recommend, '第三方 client 没有在 /api/recommend 前被拦下');
+
+    const branchStart = src.lastIndexOf('if (!isFirstPartyClient', at.firstParty);
+    const around = src.slice(branchStart, at.chat);
+    assert.match(
+      around,
+      /if \(!isFirstPartyClient\(user\.clientId\)\) \{[\s\S]*?return createErrorResponse\([\s\S]*?"FORBIDDEN"/,
+      '第三方 client 没有立刻 return 403',
+    );
   });
 
   test('401 分支是 return，不是记个日志继续往下走', () => {
