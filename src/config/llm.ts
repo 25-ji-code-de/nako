@@ -5,7 +5,7 @@ import type { Env } from "../types/index.ts";
 import type { PersonaConfig } from "../personas/base.ts";
 
 export const DEFAULT_WORKERS_AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
-export const DEFAULT_OPENAI_MODEL = "deepseek-chat";
+export const DEFAULT_OPENAI_MODEL = "deepseek-flash";
 
 /** WORKERS_AI_MODEL → persona.workersAi.model → 默认 */
 export function resolveWorkersAIModel(env: Env, persona: PersonaConfig): string {

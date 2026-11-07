@@ -23,9 +23,10 @@ export const mikuPersona: PersonaConfig = {
   name: "初音未来",
   provider: "openai",
   openai: {
-    model: "deepseek-chat",
+    model: "deepseek-flash",
   },
   modelConfig: {
+    enableThinking: false,
     temperature: 0.8,
     maxTokens: 256,
     topP: 0.9,

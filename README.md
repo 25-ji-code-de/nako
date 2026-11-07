@@ -12,12 +12,12 @@
 
 </div>
 
-一个基于 Cloudflare Workers AI 的聊天机器人 API，具有动态人格系统和智能表情推荐功能。
+一个运行在 Cloudflare Workers 上的聊天机器人 API，使用百炼 / DeepSeek 模型，具有动态人格系统和智能表情推荐功能。
 
 ## 功能
 
 - **无状态设计**：不使用数据库，对话历史由前端传入
-- **AI 模型**：使用 Cloudflare Workers AI 的 Qwen 3 30B 模型
+- **AI 模型**：聊天默认使用百炼 Qwen3.7 Flash / DeepSeek Flash，表情检索使用 Workers AI
 - **响应模式**：支持流式（SSE）和非流式两种响应方式
 - **表情推荐**：基于 Vectorize 向量搜索的表情包推荐功能
 - **角色扮演**：基于预设人格配置生成对话回复
@@ -320,8 +320,11 @@ curl -X POST https://你的域名/api/chat?persona=miku \
   -H "Authorization: Bearer 你的_SEKAI_PASS_TOKEN" \
   -d "{\"userId\":\"TestUser\",\"message\":\"今天好累啊\",\"history\":[]}"
 
-# 本地直连网关（不经 Worker / 鉴权；prompt 为精简副本，只验模型可达与粗语气）
+# 本地直连提供商（不经 Worker / 鉴权；使用正式人设 prompt、模型与思考配置，会产生 API 调用费用）
 npm run smoke:personas
+# 每个人设只测第一条，或单独测一个人设
+npm run smoke:personas -- --turns=1
+npm run smoke:personas -- --persona=yui
 # 读取 .dev.vars 的 OPENAI_*
 ```
 
@@ -353,7 +356,7 @@ nightcord-nako/
 │       ├── validation.ts     # 请求验证
 │       └── response.ts       # 响应格式化
 ├── scripts/
-│   ├── smoke-personas.mjs    # 本地 openai 人设抽检（精简 prompt）
+│   ├── smoke-personas.mjs    # 本地人设抽检（正式 prompt / 每人设独立提供商）
 │   ├── prepare-stickers.ts   # 预处理表情数据
 │   ├── upload-vectors.ts     # 上传到 Vectorize
 │   └── test-search.ts        # 本地测试搜索
@@ -392,24 +395,32 @@ npx wrangler secret put OPENAI_MODEL_ASAGI
 | `OPENAI_MODEL` | 全局覆盖（调试；盖不过 `OPENAI_MODEL_<ID>`） |
 | `WORKERS_AI_MODEL` | Workers AI 模型覆盖 |
 
-OpenAI 模型解析：`OPENAI_MODEL_<ID>` → `OPENAI_MODEL` → 人设 `openai.model` → `deepseek-v4-flash`。
+OpenAI 模型解析：`OPENAI_MODEL_<ID>` → `OPENAI_MODEL` → 人设 `openai.model` → `deepseek-flash`。
 
 采样参数仍在各人设 `modelConfig`。
 
 ### 人设与默认模型
 
-| 人设 id | Provider | 代码默认 model |
-|---------|----------|----------------|
-| nako | workers-ai | `@cf/qwen/qwen3-30b-a3b-fp8` |
-| asagi | openai | `glm-5.2-instant` |
-| miku | openai | `gpt-4.1-mini` |
-| yui | openai | `glm-4.5-flash` |
+| 人设 id | Provider | 提供商 | 代码默认 model |
+|---------|----------|--------|----------------|
+| nako | openai | 阿里云百炼 | `qwen3.7-flash` |
+| asagi | openai | DeepSeek | `deepseek-flash` |
+| miku | openai | DeepSeek | `deepseek-flash` |
+| yui | openai | 阿里云百炼 | `qwen3.7-flash` |
+
+四个人设均设置 `modelConfig.enableThinking: false`，避免短聊天消耗深度思考 Token。
+Qwen 请求使用 `enable_thinking: false`，DeepSeek 请求使用 `thinking: { type: "disabled" }`。
+其他模型不会附加这两家的专属参数；未指定 `enableThinking` 时沿用上游默认值。
+
+按 `.env.example` 为 Nako / Yui 配置 `OPENAI_ENDPOINT_NAKO` / `OPENAI_ENDPOINT_YUI`
+及对应 API Key，指向百炼兼容接口；全局 `OPENAI_ENDPOINT` / `OPENAI_API_KEY` 指向 DeepSeek。
+若生产环境已有 `OPENAI_MODEL_<ID>` 或 `OPENAI_MODEL` 覆盖，需同步更新这些值才能使用代码中的新默认模型。
 
 请求：`POST /api/chat?persona=asagi`（省略时默认 nako）。
 
 ### Workers AI / Qwen3 注意
 
-- Nako 默认 `enableThinking: true`。在 CF Workers AI 上对 Qwen3 传 `enable_thinking: false`（`chat_template_kwargs`）实测容易把 `content` 掐空，勿随意关。
+- 如将人设切回 `workers-ai`，需重新评估思考配置：Workers AI 未指定时默认 `enableThinking: true`，在 CF Qwen3 上关闭思考曾出现 `content` 为空。
 - 若模型只把短回复写在 `reasoning_content` 里，Worker 会尝试从中抠出可见回复，并在日志打 `[workers-ai] empty content; recovered…`；**不会**把思维链回给客户端。
 
 ### Cloudflare Workers AI 响应格式

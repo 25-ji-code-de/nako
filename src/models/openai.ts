@@ -4,18 +4,39 @@
 import type { ModelProvider, ModelConfig } from "./base.ts";
 import type { HistoryMessage, AIResponse } from "../types/index.ts";
 import { appendUserMessage, formatChatHistory } from "./format-history.ts";
+import { DEFAULT_OPENAI_MODEL } from "../config/llm.ts";
 
 /** OpenAI 兼容 API 提供商 */
 export class OpenAIProvider implements ModelProvider {
   private readonly fullEndpoint: string;
+  private readonly apiKey: string;
+  private readonly model: string;
+  private readonly config: ModelConfig;
 
   constructor(
     endpoint: string,
-    private apiKey: string,
-    private model: string = "gpt-3.5-turbo",
-    private config: ModelConfig = {}
+    apiKey: string,
+    model: string = DEFAULT_OPENAI_MODEL,
+    config: ModelConfig = {}
   ) {
     this.fullEndpoint = this.normalizeEndpoint(endpoint);
+    this.apiKey = apiKey;
+    this.model = model;
+    this.config = config;
+  }
+
+  /** 两家兼容接口的思考开关不同；其他模型不附加供应商专属参数。 */
+  private thinkingParameters(): Record<string, unknown> {
+    const enabled = this.config.enableThinking;
+    if (enabled === undefined) return {};
+
+    if (this.model.startsWith("qwen")) {
+      return { enable_thinking: enabled };
+    }
+    if (this.model.startsWith("deepseek-")) {
+      return { thinking: { type: enabled ? "enabled" : "disabled" } };
+    }
+    return {};
   }
 
   /** 补全到 …/v1/chat/completions（已是完整路径则不动） */
@@ -59,6 +80,7 @@ export class OpenAIProvider implements ModelProvider {
       frequency_penalty: this.config.frequencyPenalty ?? 0,
       presence_penalty: this.config.presencePenalty ?? 0,
       stream,
+      ...this.thinkingParameters(),
     };
 
     const response = await fetch(this.fullEndpoint, {

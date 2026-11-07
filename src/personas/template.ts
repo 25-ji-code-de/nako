@@ -8,9 +8,10 @@ export const templatePersona: PersonaConfig = {
   name: "模板人设",
   provider: "openai",
   openai: {
-    model: "deepseek-chat",
+    model: "deepseek-flash",
   },
   modelConfig: {
+    enableThinking: false,
     temperature: 0.7,
     maxTokens: 1024,
     topP: 0.9,

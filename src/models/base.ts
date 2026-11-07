@@ -21,8 +21,8 @@ export interface ModelConfig {
   frequencyPenalty?: number;
   presencePenalty?: number;
   /**
-   * 模型 thinking（Qwen3 等）。默认 true。
-   * 注意：CF Workers AI 上对 Qwen3 关 thinking 容易 content 为空。
+   * 模型深度思考开关。OpenAI 兼容接口按 Qwen / DeepSeek 协议传参；
+   * 未指定时使用上游默认值。Workers AI 默认 true，CF Qwen3 关闭后可能 content 为空。
    */
   enableThinking?: boolean;
 }

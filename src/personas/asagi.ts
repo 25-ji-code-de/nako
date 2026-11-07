@@ -7,9 +7,10 @@ export const asagiPersona: PersonaConfig = {
   name: "Asagi",
   provider: "openai",
   openai: {
-    model: "deepseek-v4-pro",
+    model: "deepseek-flash",
   },
   modelConfig: {
+    enableThinking: false,
     temperature: 0.85,
     maxTokens: 300,
     topP: 0.92,

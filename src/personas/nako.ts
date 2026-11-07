@@ -97,9 +97,10 @@ export const nakoPersona: PersonaConfig = {
   name: "Nako",
   provider: "openai",
   openai: {
-    model: "qwen-plus",
+    model: "qwen3.7-flash",
   },
   modelConfig: {
+    enableThinking: false,
     temperature: 0.75,
     maxTokens: 256,
     topP: 0.9,

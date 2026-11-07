@@ -61,9 +61,10 @@ export const yuiPersona: PersonaConfig = {
   name: "汤川唯",
   provider: "openai",
   openai: {
-    model: "qwen-max",
+    model: "qwen3.7-flash",
   },
   modelConfig: {
+    enableThinking: false,
     temperature: 0.72,
     maxTokens: 300,
     topP: 0.9,
